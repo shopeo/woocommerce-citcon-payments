@@ -330,7 +330,7 @@ if (!function_exists('woocommerce_gateway_citcon_init')) {
                     $country = $order->get_shipping_country();
                     $method = $payment_channel;
                     $ipn_url = home_url() . '/wc-api/' . $this->id . '?id=' . $order->get_id();
-                    $success_url = $order->get_checkout_order_received_url($order);
+                    $success_url = $this->get_return_url($order);
                     $fail_url = $success_url;
                     $goods = [
                         'shipping' => [
@@ -370,7 +370,24 @@ if (!function_exists('woocommerce_gateway_citcon_init')) {
 
                 public function webhook()
                 {
-
+                    $order = new WC_Order($_GET['id']);
+                    error_log('WebHook:' . $_GET['id']);
+                    $params = file_get_contents("php://input");
+                    error_log($params);
+                    $params = json_decode($params, true);
+                    error_log(print_r($params, true));
+                    $sign_str = "amount={$params['amount']}&amount_captured={$params['amount_captured']}&amount_refunded={$params['amount_refunded']}&currency={$params['currency']}&fields={$params['fields']}&id={$params['id']}&payment={$params['payment']}&payment_method={$params['payment_method']}&reference={$params['reference']}&status={$params['status']}&time_completed={$params['time_completed']}&time_created={$params['time_created']}&transaction_type={$params['transaction_type']}&secret={$this->merchant_key}";
+                    error_log($sign_str);
+                    $sign = hash('sha256', $sign_str);
+                    error_log($sign);
+                    if ($order->get_id() === intval($params['reference']) && $sign === $params['sign'] && $params['transaction_type'] === 'charge' && $params['status'] === 'succeeded') {
+                        error_log('Payment completed');
+                        $order->payment_complete();
+                        wc_reduce_stock_levels($order->get_id());
+                        $order->add_order_note(
+                            __('Payment completed', 'woocommerce-citcon-payments')
+                        );
+                    }
                 }
             }
         }

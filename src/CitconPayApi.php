@@ -46,7 +46,8 @@ class CitconPayApi
                 'reference' => strval($reference),
                 'amount' => $amount,
                 'currency' => $currency,
-                'country' => $country
+                'country' => $country,
+                "auto_capture" => true
             ],
             'payment' => [
                 'method' => $method,

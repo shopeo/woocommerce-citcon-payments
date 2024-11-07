@@ -32,7 +32,6 @@ class CitconPayApi
             'body' => json_encode([
                 'token_type' => 'server'
             ]),
-            'debug' => $this->debug,
         ]);
         $body = $response->getBody();
         $data = json_decode($body->getContents(), true);
@@ -74,7 +73,6 @@ class CitconPayApi
                 'Authorization' => 'Bearer ' . $access_token
             ],
             'body' => json_encode($body),
-            'debug' => $this->debug,
         ]);
         $body = $response->getBody();
         $content = $body->getContents();

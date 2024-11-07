@@ -17,8 +17,6 @@ class PaymentChannel
 
     public $hide_form_title = 'yes';
 
-    public $processPaymentBody;
-
     public function __construct($data)
     {
         $this->title = $data['title'];
@@ -34,10 +32,6 @@ class PaymentChannel
 
         if (isset($data['icon_height'])) {
             $this->icon_height = $data['icon_height'];
-        }
-
-        if (isset($data['processPaymentBody'])) {
-            $this->processPaymentBody = $data['processPaymentBody'];
         }
     }
     public function get_form_fields () {

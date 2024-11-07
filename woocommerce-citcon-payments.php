@@ -74,7 +74,7 @@ $payment_channels = [
         'checked' => 'yes',
         'hide_form_title' => 'no',
         'icon' => 'assets/images/card.jpg',
-        'icon_height' => '22',
+        'icon_height' => '24',
     ]),
     new PaymentChannel([
         'title' => 'Alipay',
@@ -111,11 +111,6 @@ $payment_channels = [
         'enabled' => 'no',
         'checked' => 'no',
         'icon' => 'assets/images/paypal-logo.png',
-        'processPaymentBody' => function ($params, $order) {
-            $params['country'] = 'US';
-            $params['auto_capture'] = 'true';
-            return $params;
-        }
     ]),
     new PaymentChannel([
         'method' => 'venmo',
@@ -126,11 +121,6 @@ $payment_channels = [
         'checked' => 'no',
         'icon' => 'assets/images/venmo-logo.png',
         'icon_height' => '20',
-        'processPaymentBody' => function ($params, $order) {
-            $params['country'] = 'US';
-            $params['auto_capture'] = 'true';
-            return $params;
-        },
     ]),
 ];
 
@@ -274,10 +264,10 @@ if (!function_exists('woocommerce_gateway_citcon_init')) {
                         <ul class="wc_payment_methods payment_methods methods">
                             <?php
                             $plugin_dir = plugin_dir_url(__FILE__);
+                            $currency = get_option('woocommerce_currency');
                             foreach (get_payment_channels() as $channel) {
                                 $method = $channel->method;
                                 $title = $channel->title;
-                                $currency = get_option('woocommerce_currency');
                                 $icon = $channel->icon;
                                 $icon_height = $channel->icon_height;
                                 if (strcmp($this->settings[$method], 'yes') == 0 && in_array($currency, $channel->currency)) { ?>
@@ -313,8 +303,7 @@ if (!function_exists('woocommerce_gateway_citcon_init')) {
                     <?php
                 }
 
-                public
-                function process_payment($order_id)
+                public function process_payment($order_id)
                 {
                     global $woocommerce;
                     $order = new WC_Order($order_id);
@@ -355,11 +344,13 @@ if (!function_exists('woocommerce_gateway_citcon_init')) {
                         $order->set_transaction_id($data['data']['id']);
                         $order->save();
                         $woocommerce->cart->empty_cart();
+                        error_log('Redirect:' . $data['data']['payment']['client'][0]['content']);
                         foreach ($data['data']['payment']['client'] as $item) {
                             if ($item['format'] === 'redirect' && $item['method'] === 'GET') {
                                 $redirect_url = $item['content'];
                             }
                         }
+                        error_log($redirect_url);
                         return array(
                             'result' => 'success',
                             'redirect' => $redirect_url
@@ -461,9 +452,28 @@ if (!function_exists('citcon_register_order_approval_payment_method_type')) {
 
                 public function get_payment_method_data()
                 {
+                    $channels = [];
+                    $plugin_dir = plugin_dir_url(__FILE__);
+                    $currency = get_option('woocommerce_currency');
+                    foreach (get_payment_channels() as $channel) {
+                        $method = $channel->method;
+                        $title = $channel->title;
+                        $icon = $channel->icon;
+                        $icon_height = $channel->icon_height;
+                        if (strcmp($this->settings[$method], 'yes') == 0 && in_array($currency, $channel->currency)) {
+                            $channels[] = [
+                                'method' => $method,
+                                'title' => $title,
+                                'icon' => $plugin_dir . $icon,
+                                'icon_height' => $icon_height,
+                            ];
+                        }
+                    }
                     return [
                         'title' => $this->get_setting('title'),
                         'description' => $this->get_setting('description'),
+                        'channels' => json_encode($channels),
+                        'default_channel' => $this->settings['default_channel'],
                         'supports' => $this->gateway->supports,
                     ];
                 }

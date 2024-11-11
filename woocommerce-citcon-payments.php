@@ -339,7 +339,15 @@ if (!function_exists('woocommerce_gateway_citcon_init')) {
                             ];
                         }
                     }
-                    $data = $citconApi->charge($reference, $amount, $currency, $country, $method, $ipn_url, $success_url, $fail_url, $goods);
+                    $billing_address = [
+                        "street" => $order->get_billing_address_1(),
+                        "street2" => $order->get_billing_address_2(),
+                        "city" => $order->get_billing_city(),
+                        "state" => $order->get_billing_state(),
+                        "zip" => $order->get_billing_postcode(),
+                        "country" => $order->get_billing_country()
+                    ];
+                    $data = $citconApi->charge($reference, $amount, $currency, $country, $billing_address, $method, $ipn_url, $success_url, $fail_url, $goods);
                     if ($data['status'] === 'success') {
                         $order->set_transaction_id($data['data']['id']);
                         $order->save();

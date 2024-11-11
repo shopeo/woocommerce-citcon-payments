@@ -38,7 +38,7 @@ class CitconPayApi
         return $data['data']['access_token'];
     }
 
-    public function charge($reference, $amount, $currency, $country, $method, $ipn_url, $success_url, $fail_url, $goods)
+    public function charge($reference, $amount, $currency, $country, $billing_address, $method, $ipn_url, $success_url, $fail_url, $goods)
     {
         $body = [
             'transaction' => [
@@ -51,6 +51,7 @@ class CitconPayApi
             'payment' => [
                 'method' => $method,
                 'request_token' => false,
+                'billing_address' => $billing_address,
                 '3ds' => [
                     'mode' => 'always'
                 ]
